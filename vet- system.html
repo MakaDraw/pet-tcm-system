@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>宠物中医馆 · 智能问诊系统</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --surface2: #f1efe8;
+    --border: rgba(0,0,0,0.1);
+    --border-md: rgba(0,0,0,0.18);
+    --text: #1a1a18;
+    --text2: #5f5e5a;
+    --text3: #888780;
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #0F6E56;
+    --amber-light: #FAEEDA;
+    --amber-dark: #854F0B;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-brand { display: flex; align-items: center; gap: 10px; }
+  .header-logo {
+    width: 32px; height: 32px; background: var(--green);
+    border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; color: white; font-size: 16px;
+  }
+  .header-name { font-size: 16px; font-weight: 600; }
+  .header-sub { font-size: 12px; color: var(--text3); }
+  .header-date { font-size: 13px; color: var(--text2); }
+
+  /* Layout */
+  .layout { display: flex; height: calc(100vh - 56px); }
+
+  /* Sidebar */
+  .sidebar {
+    width: 200px; min-width: 200px;
+    background: var(--surface);
+    border-right: 0.5px solid var(--border);
+    padding: 1.25rem 0.75rem;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .nav-label {
+    font-size: 11px; font-weight: 600; color: var(--text3);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 0 0.75rem; margin: 1rem 0 6px;
+  }
+  .nav-label:first-child { margin-top: 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: var(--radius-sm);
+    font-size: 14px; color: var(--text2);
+    cursor: pointer; border: none; background: none;
+    width: 100%; text-align: left; transition: all 0.12s;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--green-light); color: var(--green-dark); font-weight: 500; }
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+  .badge {
+    margin-left: auto; background: var(--green); color: white;
+    font-size: 11px; padding: 1px 7px; border-radius: 20px;
+  }
+
+  /* Main */
+  .main { flex: 1; overflow-y: auto; padding: 1.5rem 2rem; }
+
+  /* Page header */
+  .page-header { margin-bottom: 1.5rem; }
+  .page-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .page-sub { font-size: 14px; color: var(--text2); }
+
+  /* Cards */
+  .card {
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem;
+  }
+  .card-title {
+    font-size: 12px; font-weight: 600; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 1rem;
+  }
+
+  /* Form */
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 13px; color: var(--text2); }
+  .field input, .field select, .field textarea {
+    padding: 8px 10px; border: 0.5px solid var(--border-md);
+    border-radius: var(--radius-sm); font-size: 14px;
+    background: var(--surface); color: var(--text);
+    outline: none; transition: border-color 0.12s;
+    font-family: inherit;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--green);
+  }
+  .field textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+
+  /* Tags */
+  .tag-group { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .tag {
+    padding: 5px 12px; border-radius: 20px; font-size: 13px;
+    cursor: pointer; border: 0.5px solid var(--border-md);
+    background: var(--surface2); color: var(--text2); transition: all 0.1s;
+    user-select: none;
+  }
+  .tag.on { background: var(--green-light); border-color: var(--green); color: var(--green-dark); }
+
+  /* Buttons */
+  .btn {
+    padding: 9px 18px; border-radius: var(--radius-sm); font-size: 14px;
+    cursor: pointer; border: 0.5px solid var(--border-md);
+    background: var(--surface); color: var(--text2); transition: all 0.12s;
+    font-family: inherit;
+  }
+  .btn:hover { border-color: var(--border-md); background: var(--surface2); }
+  .btn-primary {
+    background: var(--green); color: white; border-color: var(--green);
+  }
+  .btn-primary:hover { background: var(--green-dark); border-color: var(--green-dark); }
+  .btn-full { width: 100%; text-align: center; }
+
+  /* AI analysis */
+  .ai-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--green-light); color: var(--green-dark);
+    font-size: 12px; font-weight: 500; padding: 4px 10px;
+    border-radius: var(--radius-sm); margin-bottom: 12px;
+  }
+  .condition-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 0.5px solid var(--border);
+    font-size: 14px;
+  }
+  .condition-row:last-child { border-bottom: none; }
+  .prob-wrap { display: flex; align-items: center; gap: 8px; }
+  .prob-bar { height: 6px; border-radius: 3px; background: var(--green); }
+  .prob-label { font-size: 12px; color: var(--text2); min-width: 34px; text-align: right; }
+  .q-list { list-style: none; }
+  .q-list li {
+    display: flex; gap: 8px; padding: 9px 0;
+    border-bottom: 0.5px solid var(--border); font-size: 14px; line-height: 1.5;
+  }
+  .q-list li:last-child { border-bottom: none; }
+  .q-num { color: var(--green); font-weight: 600; min-width: 20px; }
+  .note-box {
+    background: var(--surface2); border-radius: var(--radius-sm);
+    padding: 12px 14px; font-size: 14px; line-height: 1.7; color: var(--text);
+  }
+
+  /* Doctor list */
+  .record-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 0; border-bottom: 0.5px solid var(--border);
+  }
+  .record-row:last-child { border-bottom: none; }
+  .record-name { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+  .record-sub { font-size: 12px; color: var(--text2); }
+  .btn-sm {
+    padding: 5px 12px; font-size: 12px; border-radius: var(--radius-sm);
+    cursor: pointer; border: 0.5px solid var(--green);
+    color: var(--green-dark); background: var(--green-light);
+  }
+  .btn-sm:hover { background: var(--green); color: white; }
+
+  /* Info grid */
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .info-cell {
+    padding: 8px 0; border-bottom: 0.5px solid var(--border);
+    font-size: 13px;
+  }
+  .info-cell:nth-last-child(-n+2) { border-bottom: none; }
+  .info-lbl { color: var(--text3); margin-bottom: 2px; font-size: 12px; }
+  .info-val { color: var(--text); font-weight: 500; }
+
+  /* History */
+  .search-bar {
+    display: flex; gap: 10px; margin-bottom: 1rem; align-items: center;
+  }
+  .search-bar input { flex: 1; }
+  .hist-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .hist-table th {
+    font-size: 12px; font-weight: 600; color: var(--text3); text-align: left;
+    padding: 8px 12px; border-bottom: 0.5px solid var(--border-md);
+    background: var(--surface2);
+  }
+  .hist-table td {
+    padding: 11px 12px; border-bottom: 0.5px solid var(--border);
+    vertical-align: middle;
+  }
+  .hist-table tr:last-child td { border-bottom: none; }
+  .hist-table tr:hover td { background: var(--surface2); }
+
+  /* Pill */
+  .pill {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 12px;
+  }
+  .pill-amber { background: var(--amber-light); color: var(--amber-dark); }
+  .pill-green { background: var(--green-light); color: var(--green-dark); }
+
+  /* Empty state */
+  .empty {
+    text-align: center; padding: 3rem 1rem;
+    color: var(--text3); font-size: 14px;
+  }
+  .empty-icon { font-size: 36px; margin-bottom: 10px; }
+
+  /* Modal overlay */
+  .modal-bg {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.35); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 1.5rem; width: 90%; max-width: 620px;
+    max-height: 88vh; overflow-y: auto;
+    border: 0.5px solid var(--border);
+  }
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1.25rem;
+  }
+  .modal-title { font-size: 16px; font-weight: 600; }
+  .close-btn {
+    background: none; border: none; font-size: 20px;
+    cursor: pointer; color: var(--text2); line-height: 1;
+    padding: 4px 8px; border-radius: var(--radius-sm);
+  }
+  .close-btn:hover { background: var(--surface2); }
+
+  .section-sep {
+    border: none; border-top: 0.5px solid var(--border); margin: 1rem 0;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    background: #1a1a18; color: white; padding: 10px 18px;
+    border-radius: var(--radius-sm); font-size: 14px;
+    opacity: 0; transform: translateY(8px);
+    transition: all 0.2s; pointer-events: none; z-index: 300;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 640px) {
+    .sidebar { display: none; }
+    .main { padding: 1rem; }
+    .field-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">
+    <div class="header-logo">🐾</div>
+    <div>
+      <div class="header-name">宠物中医馆</div>
+      <div class="header-sub">智能问诊系统</div>
+    </div>
+  </div>
+  <div class="header-date" id="header-date"></div>
+</div>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="nav-label">问诊流程</div>
+    <button class="nav-item active" onclick="go('reception')" id="nav-reception">
+      <span class="icon">📋</span> 前台录入
+      <span class="badge" id="badge-reception" style="display:none"></span>
+    </button>
+    <button class="nav-item" onclick="go('ai')" id="nav-ai">
+      <span class="icon">🤖</span> AI 分析
+    </button>
+    <button class="nav-item" onclick="go('doctor')" id="nav-doctor">
+      <span class="icon">🩺</span> 医生界面
+      <span class="badge" id="badge-doctor" style="display:none"></span>
+    </button>
+    <div class="nav-label">数据管理</div>
+    <button class="nav-item" onclick="go('history')" id="nav-history">
+      <span class="icon">📂</span> 历史记录
+    </button>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- 前台录入 -->
+    <div id="page-reception">
+      <div class="page-header">
+        <div class="page-title">前台录入</div>
+        <div class="page-sub">填写宠物信息与症状，提交后自动生成 AI 辨证分析</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">宠物基本信息</div>
+        <div class="field-row">
+          <div class="field"><label>宠物名字 *</label><input type="text" id="f-name" placeholder="例：小白" /></div>
+          <div class="field"><label>动物种类 *</label>
+            <select id="f-type">
+              <option value="">请选择</option>
+              <option>猫</option><option>狗</option><option>兔</option><option>鸟</option><option>龟</option><option>其他</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>品种</label><input type="text" id="f-breed" placeholder="例：英短" /></div>
+          <div class="field"><label>年龄</label><input type="text" id="f-age" placeholder="例：3岁" /></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>性别</label>
+            <select id="f-gender"><option value="">请选择</option><option>公</option><option>母</option></select>
+          </div>
+          <div class="field"><label>体重 (kg)</label><input type="number" id="f-weight" placeholder="例：4.5" step="0.1" /></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">主人信息</div>
+        <div class="field-row">
+          <div class="field"><label>主人姓名 *</label><input type="text" id="f-owner" placeholder="例：王女士" /></div>
+          <div class="field"><label>联系电话</label><input type="text" id="f-phone" placeholder="例：138..." /></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">症状描述</div>
+        <div class="field" style="margin-bottom:12px">
+          <label>常见症状（可多选）</label>
+          <div class="tag-group" id="symptom-tags">
+            <span class="tag" onclick="this.classList.toggle('on')">食欲下降</span>
+            <span class="tag" onclick="this.classList.toggle('on')">精神萎靡</span>
+            <span class="tag" onclick="this.classList.toggle('on')">呕吐</span>
+            <span class="tag" onclick="this.classList.toggle('on')">腹泻</span>
+            <span class="tag" onclick="this.classList.toggle('on')">咳嗽</span>
+            <span class="tag" onclick="this.classList.toggle('on')">流鼻涕</span>
+            <span class="tag" onclick="this.classList.toggle('on')">皮肤瘙痒</span>
+            <span class="tag" onclick="this.classList.toggle('on')">掉毛</span>
+            <span class="tag" onclick="this.classList.toggle('on')">排尿异常</span>
+            <span class="tag" onclick="this.classList.toggle('on')">跛行</span>
+            <span class="tag" onclick="this.classList.toggle('on')">发热</span>
+            <span class="tag" onclick="this.classList.toggle('on')">眼部分泌物</span>
+            <span class="tag" onclick="this.classList.toggle('on')">饮水异常</span>
+            <span class="tag" onclick="this.classList.toggle('on')">体重下降</span>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:12px">
+          <label>症状补充描述</label>
+          <textarea id="f-detail" placeholder="请描述症状出现的时间、频率、程度、伴随情况等..."></textarea>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>持续时间</label>
+            <select id="f-duration">
+              <option value="">请选择</option>
+              <option>1天以内</option><option>2–3天</option><option>1周左右</option><option>超过1周</option><option>超过1个月</option>
+            </select>
+          </div>
+          <div class="field"><label>严重程度</label>
+            <select id="f-severity">
+              <option value="">请选择</option>
+              <option>轻微</option><option>中等</option><option>严重</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">既往病史</div>
+        <div class="field">
+          <label>过往疾病或用药记录（如有）</label>
+          <textarea id="f-history" placeholder="例：曾患肠炎，2023年服用益生菌治愈。对青霉素过敏。" style="min-height:60px"></textarea>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-full" onclick="submitForm()" style="padding:12px">
+        ✨ 提交并生成 AI 分析
+      </button>
+    </div>
+
+    <!-- AI 分析 -->
+    <div id="page-ai" style="display:none">
+      <div class="page-header">
+        <div class="page-title">AI 辨证分析</div>
+        <div class="page-sub">基于症状的初步中医辨证方向，仅供参考，最终诊断以医生为准</div>
+      </div>
+      <div id="ai-empty" class="empty">
+        <div class="empty-icon">🤖</div>
+        请先在前台录入页面填写信息并提交
+      </div>
+      <div id="ai-content" style="display:none">
+        <div class="card">
+          <div class="ai-badge">🤖 AI 辨证分析</div>
+          <div id="ai-pet-info" style="font-size:14px;color:#5f5e5a;margin-bottom:1rem"></div>
+          <div id="ai-conditions"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">建议医生重点询问</div>
+          <ul class="q-list" id="ai-questions"></ul>
+        </div>
+        <div class="card">
+          <div class="card-title">辨证注意事项</div>
+          <div class="note-box" id="ai-note"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:1rem">
+          <button class="btn" onclick="go('reception')">← 返回修改</button>
+          <button class="btn btn-primary" onclick="go('doctor')">提交给医生 →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 医生界面 -->
+    <div id="page-doctor" style="display:none">
+      <div class="page-header">
+        <div class="page-title">医生界面</div>
+        <div class="page-sub">查看今日待诊病例，填写诊断结论</div>
+      </div>
+      <div id="doc-empty" class="empty">
+        <div class="empty-icon">🩺</div>
+        暂无待诊病例
+      </div>
+      <div id="doc-list-wrap" style="display:none">
+        <div class="card">
+          <div class="card-title">今日待诊</div>
+          <div id="doc-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 历史记录 -->
+    <div id="page-history" style="display:none">
+      <div class="page-header">
+        <div class="page-title">历史记录</div>
+        <div class="page-sub">查询本院所有问诊记录</div>
+      </div>
+      <div class="card" style="padding:1rem 1.25rem">
+        <div class="search-bar">
+          <input type="text" id="hist-search" placeholder="🔍  搜索宠物名、主人姓名、种类..." oninput="renderHistory()" style="padding:8px 12px;border:0.5px solid var(--border-md);border-radius:6px;font-size:14px;outline:none;font-family:inherit" />
+          <select id="hist-type-filter" onchange="renderHistory()" style="padding:8px 10px;border:0.5px solid var(--border-md);border-radius:6px;font-size:14px;font-family:inherit">
+            <option value="">全部种类</option>
+            <option>猫</option><option>狗</option><option>兔</option><option>鸟</option><option>龟</option><option>其他</option>
+          </select>
+          <button class="btn" onclick="clearHistory()" style="white-space:nowrap;color:#a32d2d;border-color:#f0959580">清空记录</button>
+        </div>
+        <div id="hist-empty" class="empty" style="padding:2rem">
+          <div class="empty-icon">📂</div>暂无历史记录
+        </div>
+        <div id="hist-table-wrap" style="display:none;overflow-x:auto">
+          <table class="hist-table">
+            <thead>
+              <tr>
+                <th>日期时间</th>
+                <th>宠物名</th>
+                <th>种类/品种</th>
+                <th>主人</th>
+                <th>主诉症状</th>
+                <th>AI辨证</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="hist-tbody"></tbody>
+          </table>
+        </div>
+        <div id="hist-count" style="font-size:12px;color:var(--text3);margin-top:10px;text-align:right"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- 病例详情 Modal -->
+<div class="modal-bg" id="detail-modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">病例详情</div>
+      <button class="close-btn" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ─── State ───────────────────────────────────────────────
+  const STORAGE_KEY = 'petclinic_records';
+  let pendingRecord = null;
+
+  function loadRecords() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+  }
+  function saveRecords(arr) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  }
+
+  // ─── Navigation ──────────────────────────────────────────
+  const pages = ['reception','ai','doctor','history'];
+  function go(page) {
+    pages.forEach(p => {
+      document.getElementById('page-'+p).style.display = p === page ? '' : 'none';
+      document.getElementById('nav-'+p).classList.toggle('active', p === page);
+    });
+    if (page === 'history') renderHistory();
+    if (page === 'doctor') renderDoctorList();
+  }
+
+  // ─── Date ────────────────────────────────────────────────
+  function updateDate() {
+    const d = new Date();
+    document.getElementById('header-date').textContent =
+      d.toLocaleDateString('zh-CN', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  }
+  updateDate();
+
+  // ─── Form submit ─────────────────────────────────────────
+  function submitForm() {
+    const name = document.getElementById('f-name').value.trim();
+    const type = document.getElementById('f-type').value;
+    const owner = document.getElementById('f-owner').value.trim();
+    if (!name || !type || !owner) { toast('请填写宠物名、种类和主人姓名'); return; }
+
+    const symptoms = [...document.querySelectorAll('#symptom-tags .tag.on')].map(t => t.textContent);
+    const detail = document.getElementById('f-detail').value.trim();
+    const ai = generateAI(symptoms, detail, type);
+
+    const record = {
+      id: Date.now(),
+      datetime: new Date().toLocaleString('zh-CN'),
+      name, type,
+      breed: document.getElementById('f-breed').value.trim() || '—',
+      age: document.getElementById('f-age').value.trim() || '—',
+      gender: document.getElementById('f-gender').value || '—',
+      weight: document.getElementById('f-weight').value || '—',
+      owner,
+      phone: document.getElementById('f-phone').value.trim() || '—',
+      symptoms, detail,
+      duration: document.getElementById('f-duration').value || '—',
+      severity: document.getElementById('f-severity').value || '—',
+      history: document.getElementById('f-history').value.trim() || '无',
+      ai,
+      diagnosis: '',
+      status: '待诊'
+    };
+
+    pendingRecord = record;
+    renderAI(record);
+    updateBadges();
+    go('ai');
+    toast('✅ 已生成 AI 分析');
+  }
+
+  // ─── AI engine ───────────────────────────────────────────
+  function generateAI(symptoms, detail, type) {
+    const text = [...symptoms, detail].join('，');
+    let conditions = [], questions = [], note = '';
+
+    if (text.match(/食欲|呕吐|腹泻|肠/)) {
+      conditions = [{n:'脾胃虚弱 / 湿热内蕴', p:82}, {n:'肝气犯胃', p:44}, {n:'食滞胃脘', p:31}];
+      questions = ['大便颜色与质地如何？是否有未消化食物？','饮水量近期是否有变化？','是否接触过新食物或有吞食异物可能？'];
+      note = '望诊重点观察舌苔：厚腻苔提示湿热，薄白苔提示脾虚。腹部触诊排查积滞或压痛。';
+    } else if (text.match(/咳嗽|鼻涕|呼吸|肺/)) {
+      conditions = [{n:'风寒束肺', p:72}, {n:'肺热壅盛', p:41}, {n:'痰湿阻肺', p:28}];
+      questions = ['咳嗽是干咳还是有痰？痰色如何？','体温是否升高？','近期是否接触过其他动物或换过环境？'];
+      note = '区分寒热：寒证鼻涕清稀色白，热证鼻涕黄稠；听诊肺部有无啰音。';
+    } else if (text.match(/皮肤|瘙痒|掉毛|毛|皮/)) {
+      conditions = [{n:'血虚风燥', p:66}, {n:'湿毒浸淫', p:54}, {n:'肝肾阴虚', p:29}];
+      questions = ['皮肤是否有红肿、脱屑或结痂？','瘙痒白天还是夜间更明显？','是否有季节性规律或换季加重？'];
+      note = '建议皮肤镜检查排除真菌感染；血虚证舌淡苔薄，湿毒证皮损渗液明显。';
+    } else if (text.match(/排尿|尿|肾/)) {
+      conditions = [{n:'肾气不足', p:70}, {n:'膀胱湿热', p:55}, {n:'肾阳虚衰', p:38}];
+      questions = ['尿液颜色、气味和频率如何？','排尿时是否有痛苦表现？','饮水量是否异常增多？'];
+      note = '膀胱湿热多见尿频尿急；肾虚多见尿量多色清，注意结合饮水量综合判断。';
+    } else if (text.match(/跛行|腿|关节|骨/)) {
+      conditions = [{n:'气滞血瘀', p:68}, {n:'寒湿痹阻', p:52}, {n:'肝肾亏损', p:40}];
+      questions = ['哪条腿受影响？跛行是持续还是阵发？','天气变化是否影响症状？','是否有外伤史？'];
+      note = '触诊关节排查肿胀热痛；老年动物注意肝肾亏损引起的骨质退化。';
+    } else {
+      conditions = [{n:'气血两虚', p:58}, {n:'肾阳不足', p:42}, {n:'肝气郁结', p:30}];
+      questions = ['睡眠和活动量是否有变化？','四肢是否有乏力或怕冷表现？','近期是否有应激事件（换环境、手术等）？'];
+      note = '综合望闻问切，重点观察精神状态、舌色及舌苔，必要时配合血常规检查。';
+    }
+
+    return { conditions, questions, note };
+  }
+
+  // ─── Render AI page ──────────────────────────────────────
+  function renderAI(record) {
+    document.getElementById('ai-empty').style.display = 'none';
+    document.getElementById('ai-content').style.display = '';
+    document.getElementById('ai-pet-info').innerHTML =
+      `<strong>${record.name}</strong> · ${record.type}${record.breed !== '—' ? ' / '+record.breed : ''} · ${record.age} · 主人：${record.owner}`;
+    document.getElementById('ai-conditions').innerHTML = record.ai.conditions.map(c => `
+      <div class="condition-row">
+        <span>${c.n}</span>
+        <div class="prob-wrap">
+          <div class="prob-bar" style="width:${Math.round(c.p*0.7)}px"></div>
+          <span class="prob-label">${c.p}%</span>
+        </div>
+      </div>`).join('');
+    document.getElementById('ai-questions').innerHTML =
+      record.ai.questions.map((q,i) => `<li><span class="q-num">${i+1}</span><span>${q}</span></li>`).join('');
+    document.getElementById('ai-note').textContent = record.ai.note;
+  }
+
+  // ─── Doctor list ─────────────────────────────────────────
+  function renderDoctorList() {
+    const records = loadRecords().filter(r => r.status === '待诊');
+    const wrap = document.getElementById('doc-list-wrap');
+    const empty = document.getElementById('doc-empty');
+    const list = document.getElementById('doc-list');
+
+    const allToday = pendingRecord
+      ? [pendingRecord, ...records.filter(r => r.id !== pendingRecord.id)]
+      : records;
+
+    if (!allToday.length) { wrap.style.display='none'; empty.style.display=''; return; }
+    wrap.style.display=''; empty.style.display='none';
+    list.innerHTML = allToday.map(r => `
+      <div class="record-row">
+        <div>
+          <div class="record-name">${r.name} <span style="font-size:12px;font-weight:400;color:var(--text2)">${r.type}${r.breed !== '—' ? ' / '+r.breed : ''} · ${r.age}</span></div>
+          <div class="record-sub">主人：${r.owner} &nbsp;·&nbsp; ${r.datetime} &nbsp;·&nbsp;
+            <span class="pill ${r.severity === '严重' ? 'pill-amber' : 'pill-green'}">${r.severity || '—'}</span>
+          </div>
+        </div>
+        <button class="btn-sm" onclick="openDetail(${r.id}, 'doctor')">查看 / 诊断</button>
+      </div>`).join('');
+  }
+
+  // ─── History ─────────────────────────────────────────────
+  function renderHistory() {
+    const records = loadRecords();
+    const q = document.getElementById('hist-search').value.toLowerCase();
+    const tf = document.getElementById('hist-type-filter').value;
+    const filtered = records.filter(r =>
+      (!q || [r.name,r.owner,r.type,r.breed].join(' ').toLowerCase().includes(q)) &&
+      (!tf || r.type === tf)
+    ).reverse();
+
+    const empty = document.getElementById('hist-empty');
+    const wrap = document.getElementById('hist-table-wrap');
+    if (!filtered.length) { empty.style.display=''; wrap.style.display='none'; document.getElementById('hist-count').textContent=''; return; }
+    empty.style.display='none'; wrap.style.display='';
+    document.getElementById('hist-count').textContent = `共 ${filtered.length} 条记录（总计 ${records.length} 条）`;
+    document.getElementById('hist-tbody').innerHTML = filtered.map(r => `
+      <tr>
+        <td style="white-space:nowrap;font-size:12px;color:var(--text2)">${r.datetime}</td>
+        <td><strong>${r.name}</strong></td>
+        <td>${r.type}${r.breed !== '—' ? ' / '+r.breed : ''}</td>
+        <td>${r.owner}</td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.symptoms.join('、')}">
+          ${r.symptoms.slice(0,3).join('、')}${r.symptoms.length > 3 ? '...' : ''}${!r.symptoms.length ? (r.detail ? r.detail.slice(0,20)+'...' : '—') : ''}
+        </td>
+        <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          ${r.ai.conditions[0]?.n || '—'}
+        </td>
+        <td>
+          <button class="btn-sm" onclick="openDetail(${r.id}, 'history')">详情</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  function clearHistory() {
+    if (!confirm('确定要清空所有历史记录吗？此操作不可撤销。')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    pendingRecord = null;
+    renderHistory();
+    updateBadges();
+    toast('已清空记录');
+  }
+
+  // ─── Detail modal ─────────────────────────────────────────
+  function openDetail(id, from) {
+    const records = loadRecords();
+    let r = records.find(x => x.id === id);
+    if (!r && pendingRecord && pendingRecord.id === id) r = pendingRecord;
+    if (!r) return;
+
+    document.getElementById('modal-title').textContent = `${r.name} · ${r.datetime}`;
+    document.getElementById('modal-body').innerHTML = `
+      <div class="card-title">宠物信息</div>
+      <div class="info-grid">
+        ${[['名字',r.name],['种类',r.type],['品种',r.breed],['年龄',r.age],['性别',r.gender],['体重',r.weight !== '—' ? r.weight+'kg' : '—'],['主人',r.owner],['电话',r.phone]].map(([l,v])=>`
+        <div class="info-cell"><div class="info-lbl">${l}</div><div class="info-val">${v}</div></div>`).join('')}
+      </div>
+      <hr class="section-sep">
+      <div class="card-title">主诉症状</div>
+      <div class="note-box" style="margin-bottom:1rem">
+        ${r.symptoms.length ? '<strong style="font-weight:500">症状：</strong>' + r.symptoms.join('、') + '<br><br>' : ''}
+        ${r.detail ? '<strong style="font-weight:500">补充：</strong>' + r.detail + '<br><br>' : ''}
+        <strong style="font-weight:500">持续时间：</strong>${r.duration}　
+        <strong style="font-weight:500">严重程度：</strong>${r.severity}　
+        <strong style="font-weight:500">既往病史：</strong>${r.history}
+      </div>
+      <hr class="section-sep">
+      <div class="ai-badge">🤖 AI 辨证分析</div>
+      <div style="margin-bottom:8px">
+        ${r.ai.conditions.map(c=>`
+        <div class="condition-row">
+          <span style="font-size:14px">${c.n}</span>
+          <div class="prob-wrap">
+            <div class="prob-bar" style="width:${Math.round(c.p*0.7)}px"></div>
+            <span class="prob-label">${c.p}%</span>
+          </div>
+        </div>`).join('')}
+      </div>
+      <div class="note-box" style="margin-bottom:1rem">${r.ai.note}</div>
+      <hr class="section-sep">
+      <div class="card-title">医生诊断</div>
+      <textarea id="diag-input" style="width:100%;min-height:90px;padding:10px;border:0.5px solid var(--border-md);border-radius:6px;font-size:14px;font-family:inherit;line-height:1.6;outline:none" placeholder="在此填写诊断结论、处方、医嘱...">${r.diagnosis || ''}</textarea>
+      <div style="display:flex;gap:10px;margin-top:10px">
+        <button class="btn btn-primary" onclick="saveDiagnosis(${id})">保存诊断</button>
+        <button class="btn" onclick="closeModalDirect()">关闭</button>
+      </div>`;
+    document.getElementById('detail-modal').classList.add('open');
+  }
+
+  function saveDiagnosis(id) {
+    const diag = document.getElementById('diag-input').value.trim();
+    const records = loadRecords();
+    const idx = records.findIndex(r => r.id === id);
+
+    if (idx >= 0) {
+      records[idx].diagnosis = diag;
+      records[idx].status = '已诊';
+      saveRecords(records);
+    } else if (pendingRecord && pendingRecord.id === id) {
+      pendingRecord.diagnosis = diag;
+      pendingRecord.status = '已诊';
+      const updated = [...records, pendingRecord];
+      saveRecords(updated);
+      pendingRecord = null;
+    }
+
+    closeModalDirect();
+    updateBadges();
+    renderDoctorList();
+    renderHistory();
+    toast('✅ 诊断已保存');
+  }
+
+  function closeModal(e) {
+    if (e.target === document.getElementById('detail-modal')) closeModalDirect();
+  }
+  function closeModalDirect() {
+    document.getElementById('detail-modal').classList.remove('open');
+  }
+
+  // ─── Badge update ─────────────────────────────────────────
+  function updateBadges() {
+    const count = loadRecords().filter(r => r.status === '待诊').length +
+      (pendingRecord && pendingRecord.status === '待诊' ? 1 : 0);
+    const b = document.getElementById('badge-doctor');
+    const br = document.getElementById('badge-reception');
+    if (count > 0) { b.style.display=''; b.textContent = count; } else { b.style.display='none'; }
+    br.style.display='none';
+  }
+
+  // ─── Toast ────────────────────────────────────────────────
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2200);
+  }
+
+  // ─── Init ─────────────────────────────────────────────────
+  updateBadges();
+</script>
+</body>
+</html>
